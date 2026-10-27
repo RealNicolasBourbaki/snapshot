@@ -187,6 +187,7 @@ kubectl get pods -n ${NAMESPACE} -l app.kubernetes.io/name=snapshot -o wide
 | `daemonset.imagePullSecrets` | Pull secrets for a private agent image override | `[]` |
 | `daemonset.runtimeClassName` | RuntimeClass for the agent pod. Set `""` to omit it when the NVIDIA runtime is containerd's default and no `nvidia` RuntimeClass exists | `nvidia` |
 | `operator.resources` | CPU and memory requests/limits for the operator manager | 50m CPU / 64Mi request, 500m CPU / 256Mi limit |
+| `operator.sourcePodTerminalGrace` | How long a capture waits for the agent's result after the checkpoint terminated its source pod, before the PodSnapshot fails with `SourcePodGone`. Raise it above the upload time of the largest checkpoint | `5m` |
 | `operator.nodeSelector` | Node selector for the operator pod | `{}` |
 | `operator.affinity` | Affinity rules for the operator pod | `{}` |
 | `operator.tolerations` | Tolerations for the operator pod | `[]` |

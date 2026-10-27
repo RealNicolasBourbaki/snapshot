@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +29,13 @@ func main() {
 	storageConfigPath := flag.String("snapshot-storage-config", "", "Path to resolved storage configuration shared with PageBroker")
 	artifactCleanupConfig := bindArtifactCleanupFlags(flag.CommandLine)
 	cuInterposeConfig := bindCuInterposeFlags(flag.CommandLine)
+	sourcePodTerminalGrace := flag.Duration("source-pod-terminal-grace", controller.DefaultSourcePodTerminalGrace,
+		"How long a capture may wait for the agent's result after its source pod turned terminal; must cover the largest checkpoint's upload")
 	flag.Parse()
+	if *sourcePodTerminalGrace <= 0 {
+		ctrl.Log.Error(fmt.Errorf("got %v", *sourcePodTerminalGrace), "--source-pod-terminal-grace must be positive")
+		os.Exit(1)
+	}
 	storeID := mustStoreID(*storageConfigPath)
 	if err := artifactCleanupConfig.Validate(); err != nil {
 		ctrl.Log.Error(err, "invalid artifact cleanup configuration")
@@ -76,9 +83,10 @@ func main() {
 	}
 
 	podSnapshotReconciler := &controller.PodSnapshotReconciler{
-		Client:             mgr.GetClient(),
-		NonCacheReadClient: mgr.GetAPIReader(),
-		Recorder:           mgr.GetEventRecorderFor("podsnapshot-controller"),
+		Client:                 mgr.GetClient(),
+		NonCacheReadClient:     mgr.GetAPIReader(),
+		Recorder:               mgr.GetEventRecorderFor("podsnapshot-controller"),
+		SourcePodTerminalGrace: *sourcePodTerminalGrace,
 	}
 	if err := podSnapshotReconciler.SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to set up PodSnapshot controller")

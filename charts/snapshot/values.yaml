@@ -22,6 +22,10 @@ image:
 replicaCount: 1
 
 operator:
+  # How long a capture waits for the agent's result after the checkpoint terminated
+  # its source pod, before the PodSnapshot fails with SourcePodGone. Must cover the
+  # upload of the largest checkpoint to storage: about 10m for 140 GB at 220 MB/s.
+  sourcePodTerminalGrace: 5m
   resources:
     limits:
       cpu: 500m
